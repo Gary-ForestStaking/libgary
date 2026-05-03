@@ -199,6 +199,86 @@ Unchanged transcript layout ([v0-protocol.md](v0-protocol.md) §4):
 
 ---
 
+## VECTOR 001 — Epoch policy: stale DATA rejection
+
+Executable mirror: `crates/libgary-core/tests/doc_vectors.rs` (`doc_epoch_policy_stale_data_vector_001`). Wire bytes constant: `DOC_VECTOR_001_STALE_DATA_OUTER_HEX`.
+
+Normative ingress path: [`SessionHandle::handle_inbound_outer`](crates/libgary-core/src/engine/session_handle.rs). Epoch checks run **before** DATA decrypt (`Session::check_inbound_epoch_policy` → `StaleEpochRejected`), so **AEAD is not invoked** for this input.
+
+### Pre-state
+
+Responder session built from the handshake **`OKM`** row under **Transcript & session `OKM`** (`ikm_session(KM, TH0, TH1)` → HKDF root).
+
+| Field | Value |
+|-------|--------|
+| Role | `bootstrap_responder` |
+| `session_id` | 16 × `0x01` (wire hex: `01010101010101010101010101010101`) |
+| `epoch` | `7` |
+| `ratchet_sk` | byte `i` = `(i + 3) mod 256` for `i` in `0..32` |
+| `initial_peer_ratchet_pub` | X25519 pubkey from **`DocFixture::ek_a_seed`** |
+| `DeviceStateAnchorV1` | `new_v0(901)` then **`recompute_anchor_commitment()`** |
+
+| Snapshot | Hex |
+|----------|-----|
+| `persistence_equivalence_digest()` | `ccf1a632cc36524036d11270ee1e8965a5313927db009fafef5acf3ae50425da` |
+
+Digest domain: `Sha256("libgary.session.persistence-equiv.v0" ‖ canonical `SessionExport` fields)` — excludes ingress-only overlays (`SessionMode`, decrypted counter sets, etc.).
+
+### Input
+
+[`OuterRecord`](crates/libgary-wire/src/outer.rs): `record_length_be ‖ Header ‖ payload`.
+
+| Field | Value |
+|-------|--------|
+| Type | DATA (`typ = 0x03`) |
+| `epoch_be` | `6` (stale vs session `7`) |
+| Payload | empty (`record_length_be = 63`, header-only body) |
+| Header `ratchet_pub` | 32 × `0x02` (opaque; not curve-validated before epoch gate) |
+
+**Envelope hex** (67 bytes):
+
+`0000003f010300000000060101010101010101010101010101010100000000000000000202020202020202020202020202020202020202020202020202020202020202`
+
+### Expected engine result
+
+| Property | Value |
+|----------|--------|
+| Result | `SessionError::StaleEpochRejected` |
+| AEAD | **Not** invoked (reject at epoch policy) |
+| Stateful mutation | **None** (ratchet blob, `epoch`, `session_id`, anchor preimage unchanged) |
+
+### Post-state invariants
+
+Must match **pre-state** exactly:
+
+| Field | Value |
+|-------|--------|
+| `session_id` | 16 × `0x01` |
+| `epoch` | `7` |
+| `persistence_equivalence_digest()` | `ccf1a632cc36524036d11270ee1e8965a5313927db009fafef5acf3ae50425da` |
+
+---
+
+## VECTOR 002 — Replay stability: repeated stale DATA
+
+Executable mirror: `doc_epoch_policy_stale_data_repeated_vector_002`.
+
+Same **pre-state** and **input envelope** as VECTOR 001. Apply the same decoded `OuterRecord` **`N` times** (`N = 64` in the Rust test).
+
+### Expected engine result (each application)
+
+| Property | Value |
+|----------|--------|
+| Result | `SessionError::StaleEpochRejected` |
+| AEAD | **Not** invoked |
+| Stateful mutation | **None** |
+
+### Post-state invariants (after all `N` attempts)
+
+Identical to VECTOR 001 post-state (digest, `session_id`, `epoch` unchanged from VECTOR 001 pre-state snapshot).
+
+---
+
 ## Next fixtures
 
 - Outer **`PAD_outer`** bitstrings with seeded RNG policy (optional reproducibility appendix).  

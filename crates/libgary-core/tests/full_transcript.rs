@@ -25,7 +25,7 @@ use libgary_core::transcript::{th0, th0_reset, th1, th1_reset};
 use libgary_core::x3dh::km_with_otp;
 use libgary_storage::SessionStore;
 use libgary_wire::{
-    pad_outer, strip_outer_pad, Header, InitAckWire, OuterRecord, RelayOuterEnvelope,
+    Header, InitAckWire, OuterRecord, RelayOuterEnvelope, pad_outer, strip_outer_pad,
 };
 use rand_chacha::ChaCha12Rng;
 use rand_core::{CryptoRng, RngCore, SeedableRng};
@@ -172,14 +172,7 @@ fn full_transcript_happy_path() {
     ));
 
     let ct_ack_in = &strip_ack[112..LOG_ACK];
-    decrypt_ack_inner(
-        &okm_alice,
-        epoch_hs,
-        &session_id_hs,
-        &wire_recv,
-        ct_ack_in,
-    )
-    .unwrap();
+    decrypt_ack_inner(&okm_alice, epoch_hs, &session_id_hs, &wire_recv, ct_ack_in).unwrap();
 
     assert_eq!(okm_alice, okm_bob);
 
@@ -209,9 +202,7 @@ fn full_transcript_happy_path() {
     alice = store.load_session().unwrap();
 
     let pt_a = data_inner_plaintext(1, 1, b"hello-full-transcript").unwrap();
-    let (hdr_d0, pay_d0) = alice
-        .send_data_plain512_outer(&pt_a, &mut pad_rng)
-        .unwrap();
+    let (hdr_d0, pay_d0) = alice.send_data_plain512_outer(&pt_a, &mut pad_rng).unwrap();
     let out_d0 = OuterRecord {
         header: hdr_d0,
         payload: pay_d0,
@@ -269,8 +260,7 @@ fn full_transcript_happy_path() {
     let th0_r = th0_reset(&rb_enc);
     let km_r = km_with_otp(&ik_a, &ek_reset, &ik_b_pub, &spk_b_pub, &otp_b_pub);
 
-    let ct_rinit =
-        encrypt_reset_init_inner(&km_r, &th0_r, epoch_new, &sid_new, &rb_enc).unwrap();
+    let ct_rinit = encrypt_reset_init_inner(&km_r, &th0_r, epoch_new, &sid_new, &rb_enc).unwrap();
     let nn_rinit = nonce_reset_init(&km_r, &th0_r, epoch_new, &sid_new);
     let mut logical_rinit = Vec::with_capacity(LOG_INIT);
     logical_rinit.extend_from_slice(&rb_enc);
@@ -354,14 +344,7 @@ fn full_transcript_happy_path() {
     ));
 
     let ct_rack_in = &strip_rack[112..LOG_ACK];
-    decrypt_reset_ack_inner(
-        &okm_r_alice,
-        epoch_new,
-        &sid_new,
-        &wire_r_recv,
-        ct_rack_in,
-    )
-    .unwrap();
+    decrypt_reset_ack_inner(&okm_r_alice, epoch_new, &sid_new, &wire_r_recv, ct_rack_in).unwrap();
     assert_eq!(okm_r_alice, okm_r_bob);
 
     let anchor2 = DeviceStateAnchorV1::new_v0(2);
@@ -386,7 +369,8 @@ fn full_transcript_happy_path() {
     alice
         .enter_reset_pending_after_rebootstrap(epoch_hs, None)
         .unwrap();
-    bob.enter_reset_pending_after_rebootstrap(epoch_hs, None).unwrap();
+    bob.enter_reset_pending_after_rebootstrap(epoch_hs, None)
+        .unwrap();
     alice.reset_pending_to_bootstrapping().unwrap();
     bob.reset_pending_to_bootstrapping().unwrap();
     alice.finish_reset_half_open_to_active().unwrap();

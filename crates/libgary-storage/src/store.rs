@@ -4,11 +4,11 @@ use std::path::{Path, PathBuf};
 
 use libgary_core::engine::{SessionHandle, SessionWalSource};
 
+use crate::StorageError;
 use crate::atomic_write::{atomic_write, read_if_exists};
 use crate::bundle_codec::{decode_bundle, encode_bundle};
 use crate::trusted_meta::{TrustedAnchorMeta, assert_monotonic_vs_trusted};
 use crate::wal_envelope::{decode_wal_envelope, encode_wal_envelope};
-use crate::StorageError;
 
 /// Persisted session store: one checksum’d WAL file (`bundle ‖ trusted_meta`) per §3.1 atomic replace.
 #[derive(Clone, Debug)]

@@ -7,6 +7,7 @@ use ed25519_dalek::{Signature, VerifyingKey};
 use libgary_core::{
     control::{ctrl_inner_padded256, encrypt_ctrl_payload},
     data::{data_inner_plaintext, encrypt_data_payload},
+    engine::{DeviceStateAnchorV1, SessionError, SessionHandle, SessionWalSource},
     handshake::{decrypt_ack_inner, decrypt_init_inner, encrypt_ack_inner, encrypt_init_inner},
     identity::{account_id, safety_number},
     ratchet::{chain_bootstrap, dh_mix, msg_step},
@@ -14,11 +15,52 @@ use libgary_core::{
     transcript::{th0, th1},
     x3dh::km_with_otp,
 };
-use libgary_wire::{Header, InitAckWire};
+use libgary_wire::{Header, InitAckWire, OuterRecord};
+use rand_chacha::ChaCha12Rng;
+use rand_core::SeedableRng;
 use x25519_dalek::{PublicKey, StaticSecret};
 
 fn hb(s: &str) -> Vec<u8> {
     hex::decode(s).unwrap()
+}
+
+/// VECTOR 001 / 002 — full `OuterRecord` wire bytes (67 B): DATA, `epoch_be=6`, empty payload.
+const DOC_VECTOR_001_STALE_DATA_OUTER_HEX: &str = concat!(
+    "0000003f0103000000000601010101010101010101010101010101",
+    "00000000000000000202020202020202020202020202020202020202020202020202020202020202"
+);
+
+const DOC_VECTOR_001_GOLDEN_PERSISTENCE_DIGEST_HEX: &str =
+    "ccf1a632cc36524036d11270ee1e8965a5313927db009fafef5acf3ae50425da";
+
+fn handshake_okm_doc_fixture() -> [u8; 64] {
+    let ik_a = StaticSecret::from(DocFixture::alice_ik_priv());
+    let ek_a = StaticSecret::from(DocFixture::ek_a_seed());
+    let ik_b_pub = PublicKey::from(&StaticSecret::from(DocFixture::bob_ik_priv()));
+    let spk_b_pub = PublicKey::from(&StaticSecret::from(DocFixture::spk_b_seed()));
+    let otp_b_pub = PublicKey::from(&StaticSecret::from(DocFixture::otp_b_seed()));
+    let km = km_with_otp(&ik_a, &ek_a, &ik_b_pub, &spk_b_pub, &otp_b_pub);
+    let init_bytes = DocFixture::init_body().encode();
+    let th0_d = th0(&init_bytes);
+    let core = DocFixture::init_ack_core();
+    let th1_d = th1(&th0_d, &core);
+    let ikm = ikm_session(&km, &th0_d, &th1_d);
+    okm_root_bootstrap(&ikm)
+}
+
+/// Shared responder session for stale-epoch policy vectors (`docs/test-vectors.md` VECTOR 001–002).
+fn doc_epoch_policy_fixture_responder() -> SessionHandle {
+    let okm = handshake_okm_doc_fixture();
+    let session_id = [0x01u8; 16];
+    let epoch = 7u32;
+    let anchor = DeviceStateAnchorV1::new_v0(901);
+    let bob_sk = std::array::from_fn(|i| i.wrapping_add(3) as u8);
+    let alice_rp = *PublicKey::from(&StaticSecret::from(DocFixture::ek_a_seed())).as_bytes();
+
+    let mut bob =
+        SessionHandle::bootstrap_responder(&okm, session_id, epoch, bob_sk, Some(alice_rp), anchor);
+    bob.recompute_anchor_commitment();
+    bob
 }
 
 #[test]
@@ -319,6 +361,74 @@ fn doc_ratchet_chain_and_data_rekey() {
         ),
         ct_rekey
     );
+}
+
+#[test]
+fn doc_epoch_policy_stale_data_vector_001() {
+    let mut bob = doc_epoch_policy_fixture_responder();
+
+    let before_digest = bob.persistence_equivalence_digest();
+    let before_epoch = SessionWalSource::epoch(&bob);
+    let before_session_id = SessionWalSource::session_id(&bob);
+
+    assert_eq!(
+        hex::encode(before_digest),
+        DOC_VECTOR_001_GOLDEN_PERSISTENCE_DIGEST_HEX
+    );
+
+    let wire = hb(DOC_VECTOR_001_STALE_DATA_OUTER_HEX);
+    let rec = OuterRecord::decode(&wire).expect("DOC_VECTOR_001 OuterRecord");
+
+    let mut rng = ChaCha12Rng::from_seed([0x99u8; 32]);
+    let err = bob
+        .handle_inbound_outer(rec, 0, &mut rng)
+        .expect_err("stale Header.epoch_be must reject before decrypt");
+
+    assert!(matches!(err, SessionError::StaleEpochRejected));
+    assert_eq!(SessionWalSource::epoch(&bob), before_epoch);
+    assert_eq!(SessionWalSource::session_id(&bob), before_session_id);
+    assert_eq!(
+        bob.persistence_equivalence_digest(),
+        before_digest,
+        "epoch gate must not mutate WAL-visible export preimage"
+    );
+}
+
+#[test]
+fn doc_epoch_policy_stale_data_repeated_vector_002() {
+    const N: usize = 64;
+
+    let mut bob = doc_epoch_policy_fixture_responder();
+    let before_digest = bob.persistence_equivalence_digest();
+    let before_epoch = SessionWalSource::epoch(&bob);
+    let before_session_id = SessionWalSource::session_id(&bob);
+
+    assert_eq!(
+        hex::encode(before_digest),
+        DOC_VECTOR_001_GOLDEN_PERSISTENCE_DIGEST_HEX
+    );
+
+    let wire = hb(DOC_VECTOR_001_STALE_DATA_OUTER_HEX);
+    let template = OuterRecord::decode(&wire).expect("DOC_VECTOR_001 OuterRecord");
+
+    for i in 0..N {
+        let mut rng = ChaCha12Rng::from_seed([0x99u8; 32]);
+        let err = bob
+            .handle_inbound_outer(template.clone(), 0, &mut rng)
+            .expect_err("each stale envelope must reject identically");
+        assert_eq!(err, SessionError::StaleEpochRejected, "iteration {i}");
+        assert_eq!(SessionWalSource::epoch(&bob), before_epoch, "iteration {i}");
+        assert_eq!(
+            SessionWalSource::session_id(&bob),
+            before_session_id,
+            "iteration {i}"
+        );
+        assert_eq!(
+            bob.persistence_equivalence_digest(),
+            before_digest,
+            "iteration {i}"
+        );
+    }
 }
 
 #[test]

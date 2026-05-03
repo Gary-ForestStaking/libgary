@@ -7,7 +7,13 @@ license.workspace = true
 description = "Stable C ABI façade for libgary SessionHandle (minimal v0 stub)"
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]
+getrandom = "0.2"
+hex = "0.4"
 libgary-core = { path = "../libgary-core" }
+libgary-wire = { path = "../libgary-wire" }
+rand_chacha = "0.3"
+rand_core = "0.6"
+x25519-dalek = { version = "2", features = ["static_secrets"] }

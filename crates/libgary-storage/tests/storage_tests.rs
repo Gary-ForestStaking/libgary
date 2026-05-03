@@ -44,14 +44,8 @@ fn alice_session_epoch(epoch: u32) -> SessionHandle {
     let okm = handshake_okm();
     let sid = [0xabu8; 16];
     let anchor = DeviceStateAnchorV1::new_v0(1);
-    let mut alice = SessionHandle::bootstrap_initiator(
-        &okm,
-        sid,
-        epoch,
-        DocFixture::ek_a_seed(),
-        None,
-        anchor,
-    );
+    let mut alice =
+        SessionHandle::bootstrap_initiator(&okm, sid, epoch, DocFixture::ek_a_seed(), None, anchor);
     alice.recompute_anchor_commitment();
     alice
 }
@@ -104,10 +98,7 @@ fn wal_missing_fails_closed() {
     alice.recompute_anchor_commitment();
     store.save_session(&alice).unwrap();
     std::fs::remove_file(store.envelope_path()).unwrap();
-    assert!(matches!(
-        store.load_session(),
-        Err(StorageError::NoBundle)
-    ));
+    assert!(matches!(store.load_session(), Err(StorageError::NoBundle)));
 }
 
 #[test]

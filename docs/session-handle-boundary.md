@@ -68,7 +68,7 @@ Other variants (`InvalidHeader`, `FutureEpoch`, `UnknownSession`, …) remain ma
 - **Errors**: integer codes only at ABI edge.
 - **Panic boundary**: foreign entrypoints must not unwind into C — wrap Rust calls (`catch_unwind` / abort policy); never `unwrap` on foreign bytes.
 
-Stub crate: `libgary-ffi` (`libgary_session_free`; expand later).
+Ship-ready façade: `libgary-ffi` (`crates/libgary-ffi`, `include/libgary.h`) — opaque `SessionHandle`, responder/initiator constructors, **relay-first** outbound/inbound (`gary_prepare_relay_outbound_utf8`, `gary_process_relay_inbound`) so transports pass opaque bytes only; raw `OuterRecord` helpers (`gary_send_utf8_data_outer`, `gary_ingest_outer`) remain for narrow lab paths. Normative framing stays in Rust (`libgary-wire`). Verify exports with `./scripts/verify-libgary-ffi-abi.sh`. Example iOS app: `examples/ios/LibGaryShell/README.md`.
 
 ---
 

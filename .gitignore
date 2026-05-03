@@ -1,4 +1,6 @@
 /target/
+/examples/ios/LibGaryShell/rust-lib/
 /fuzz/target/
 **/*.rs.bk
 .DS_Store
+**/xcuserdata/

@@ -10,7 +10,7 @@ use zeroize::{Zeroize, Zeroizing};
 use crate::constants::{DATA_INNER_FIXED, MAX_SKIP};
 use crate::data;
 use crate::ratchet::{chain_bootstrap, dh_mix, msg_step};
-use libgary_wire::{pad_outer, strip_outer_pad, Header, OuterRecord};
+use libgary_wire::{Header, OuterRecord, pad_outer, strip_outer_pad};
 
 use super::anchor::{DeviceStateAnchorV1, compute_state_commitment};
 use super::blob::{decode_blob_v2, encode_blob_v2};
@@ -156,7 +156,9 @@ impl Session {
         prior_epoch: u32,
         drain_until_ticks: Option<u64>,
     ) -> Result<(), SessionError> {
-        let expected = prior_epoch.checked_add(1).ok_or(SessionError::InvalidHeader)?;
+        let expected = prior_epoch
+            .checked_add(1)
+            .ok_or(SessionError::InvalidHeader)?;
         if self.epoch != expected {
             return Err(SessionError::InvalidHeader);
         }
@@ -465,7 +467,8 @@ impl Session {
             .checked_add(1)
             .ok_or(SessionError::ReplayRejected)?;
         self.anchor.highest_wire_seen_be = self.anchor.highest_wire_seen_be.max(ctr);
-        pad_outer(&logical, pad_rng).map_err(|_| SessionError::InvalidHeader)
+        pad_outer(&logical, pad_rng)
+            .map_err(|_| SessionError::InvalidHeader)
             .map(|payload| (hdr, payload))
     }
 
@@ -518,7 +521,8 @@ impl Session {
             .checked_add(1)
             .ok_or(SessionError::ReplayRejected)?;
         self.anchor.highest_wire_seen_be = self.anchor.highest_wire_seen_be.max(ctr);
-        pad_outer(&logical, pad_rng).map_err(|_| SessionError::InvalidHeader)
+        pad_outer(&logical, pad_rng)
+            .map_err(|_| SessionError::InvalidHeader)
             .map(|payload| (hdr, payload))
     }
 

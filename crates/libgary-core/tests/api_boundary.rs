@@ -99,7 +99,8 @@ fn finish_reset_twice_after_half_open_second_call_errors() {
     );
     bob.recompute_anchor_commitment();
 
-    bob.enter_reset_pending_after_rebootstrap(old_e, None).unwrap();
+    bob.enter_reset_pending_after_rebootstrap(old_e, None)
+        .unwrap();
     bob.finish_reset_half_open_to_active().unwrap();
     assert!(matches!(bob.ingress_mode(), SessionMode::Active { .. }));
 
@@ -164,25 +165,31 @@ fn recv_outer_bypass_on_late_epoch_data_errors_and_skips_ingress_policy() {
     alice.recompute_anchor_commitment();
     bob.recompute_anchor_commitment();
 
-    bob.enter_reset_pending_after_rebootstrap(old_e, None).unwrap();
+    bob.enter_reset_pending_after_rebootstrap(old_e, None)
+        .unwrap();
 
     let mut pad = ChaCha12Rng::from_seed([0xc0u8; 32]);
     let pt = data_inner_plaintext(1, 1, b"late-pre-reset").unwrap();
     let (hdr, payload) = alice.send_data_plain512_outer(&pt, &mut pad).unwrap();
-    let outer = OuterRecord { header: hdr, payload };
+    let outer = OuterRecord {
+        header: hdr,
+        payload,
+    };
 
     let recv_hw_before = bob.recv_high_water();
     let recv_sym_before = bob.recv_sym_idx();
 
     let mut rng = ChaCha12Rng::from_seed([0xc1u8; 32]);
     assert_eq!(
-        bob.handle_inbound_outer(outer.clone(), 0, &mut rng).unwrap_err(),
+        bob.handle_inbound_outer(outer.clone(), 0, &mut rng)
+            .unwrap_err(),
         SessionError::LateDataAfterReset
     );
 
     let mut rng = ChaCha12Rng::from_seed([0xc2u8; 32]);
     assert_eq!(
-        bob.recv_data_outer(&outer.header, &outer.payload, &mut rng).unwrap_err(),
+        bob.recv_data_outer(&outer.header, &outer.payload, &mut rng)
+            .unwrap_err(),
         SessionError::StaleEpochRejected
     );
 

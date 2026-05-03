@@ -48,7 +48,11 @@ pub fn decode_wal_envelope(bytes: &[u8]) -> Result<(Vec<u8>, Vec<u8>), StorageEr
         .checked_add(bundle_len)
         .and_then(|x| x.checked_add(meta_len))
         .ok_or(StorageError::EnvelopeTruncated)?;
-    if bytes.len() != body_end.checked_add(32).ok_or(StorageError::EnvelopeTruncated)? {
+    if bytes.len()
+        != body_end
+            .checked_add(32)
+            .ok_or(StorageError::EnvelopeTruncated)?
+    {
         return Err(StorageError::EnvelopeTruncated);
     }
 

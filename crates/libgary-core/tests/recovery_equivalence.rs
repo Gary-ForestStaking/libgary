@@ -77,9 +77,7 @@ fn golden_persistence_equivalence_digest_forward_wal_replay() {
 
     for step in 0u8..3u8 {
         let pt = data_inner_plaintext(1, 1, &[step]).unwrap();
-        let (hdr, pay) = alice
-            .send_data_plain512_outer(&pt, &mut pad_rng)
-            .unwrap();
+        let (hdr, pay) = alice.send_data_plain512_outer(&pt, &mut pad_rng).unwrap();
         encoded_outers.push(
             OuterRecord {
                 header: hdr,

@@ -1,0 +1,325 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		211104E72C884E11AA220001 /* LibGaryShellApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 211104E72C884E11AA220011 /* LibGaryShellApp.swift */; };
+		211104E72C884E11AA220003 /* LibGaryFFI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 211104E72C884E11AA220013 /* LibGaryFFI.swift */; };
+		211104E72C884E11AA220005 /* GaryPeerTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 211104E72C884E11AA220017 /* GaryPeerTransport.swift */; };
+		211104E72C884E11AA220006 /* PeerChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 211104E72C884E11AA220018 /* PeerChatView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		211104E72C884E11AA220011 /* LibGaryShellApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibGaryShellApp.swift; sourceTree = "<group>"; };
+		211104E72C884E11AA220013 /* LibGaryFFI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibGaryFFI.swift; sourceTree = "<group>"; };
+		211104E72C884E11AA220014 /* LibGaryShell-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "LibGaryShell-Bridging-Header.h"; sourceTree = "<group>"; };
+		211104E72C884E11AA220015 /* LibGaryShell.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LibGaryShell.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		211104E72C884E11AA220017 /* GaryPeerTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaryPeerTransport.swift; sourceTree = "<group>"; };
+		211104E72C884E11AA220018 /* PeerChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeerChatView.swift; sourceTree = "<group>"; };
+		211104E72C884E11AA220019 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		211104E72C884E11AA220074 /* LibGaryShell.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LibGaryShell.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		211104E72C884E11AA220030 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		211104E72C884E11AA220020 = {
+			isa = PBXGroup;
+			children = (
+				211104E72C884E11AA220021 /* LibGaryShell */,
+				211104E72C884E11AA220022 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		211104E72C884E11AA220021 /* LibGaryShell */ = {
+			isa = PBXGroup;
+			children = (
+				211104E72C884E11AA220011 /* LibGaryShellApp.swift */,
+				211104E72C884E11AA220013 /* LibGaryFFI.swift */,
+				211104E72C884E11AA220017 /* GaryPeerTransport.swift */,
+				211104E72C884E11AA220018 /* PeerChatView.swift */,
+				211104E72C884E11AA220019 /* Info.plist */,
+				211104E72C884E11AA220074 /* LibGaryShell.entitlements */,
+				211104E72C884E11AA220014 /* LibGaryShell-Bridging-Header.h */,
+			);
+			path = LibGaryShell;
+			sourceTree = "<group>";
+		};
+		211104E72C884E11AA220022 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				211104E72C884E11AA220015 /* LibGaryShell.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		211104E72C884E11AA220040 /* LibGaryShell */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 211104E72C884E11AA220061 /* Build configuration list for PBXNativeTarget "LibGaryShell" */;
+			buildPhases = (
+				211104E72C884E11AA220032 /* Sources */,
+				211104E72C884E11AA220030 /* Frameworks */,
+				211104E72C884E11AA220031 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LibGaryShell;
+			productName = LibGaryShell;
+			productReference = 211104E72C884E11AA220015 /* LibGaryShell.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		211104E72C884E11AA220050 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					211104E72C884E11AA220040 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 211104E72C884E11AA220060 /* Build configuration list for PBXProject "LibGaryShell" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 211104E72C884E11AA220020;
+			productRefGroup = 211104E72C884E11AA220022 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				211104E72C884E11AA220040 /* LibGaryShell */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		211104E72C884E11AA220031 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		211104E72C884E11AA220032 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				211104E72C884E11AA220001 /* LibGaryShellApp.swift in Sources */,
+				211104E72C884E11AA220003 /* LibGaryFFI.swift in Sources */,
+				211104E72C884E11AA220005 /* GaryPeerTransport.swift in Sources */,
+				211104E72C884E11AA220006 /* PeerChatView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		211104E72C884E11AA220070 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				ONLY_ACTIVE_ARCH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		211104E72C884E11AA220071 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		211104E72C884E11AA220072 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = LibGaryShell/LibGaryShell.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../../crates/libgary-ffi/include";
+				INFOPLIST_FILE = LibGaryShell/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/rust-lib";
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-llibgary_ffi",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.libgary.LibGaryShell;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "LibGaryShell/LibGaryShell-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		211104E72C884E11AA220073 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = LibGaryShell/LibGaryShell.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../../crates/libgary-ffi/include";
+				INFOPLIST_FILE = LibGaryShell/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/rust-lib";
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-llibgary_ffi",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.libgary.LibGaryShell;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "LibGaryShell/LibGaryShell-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		211104E72C884E11AA220060 /* Build configuration list for PBXProject "LibGaryShell" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				211104E72C884E11AA220070 /* Debug */,
+				211104E72C884E11AA220071 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		211104E72C884E11AA220061 /* Build configuration list for PBXNativeTarget "LibGaryShell" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				211104E72C884E11AA220072 /* Debug */,
+				211104E72C884E11AA220073 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 211104E72C884E11AA220050 /* Project object */;
+}

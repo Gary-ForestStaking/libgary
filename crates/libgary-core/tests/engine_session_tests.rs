@@ -184,7 +184,8 @@ fn decrypt_gap_exceeds_max_skip_errors() {
     };
     let mut rng = ChaCha20Rng::from_seed([8u8; 32]);
     assert_eq!(
-        bob.recv_data_plain512(&bogus_hdr, &c0, &mut rng).unwrap_err(),
+        bob.recv_data_plain512(&bogus_hdr, &c0, &mut rng)
+            .unwrap_err(),
         SessionError::MaxSkipExceeded
     );
 }
@@ -195,7 +196,10 @@ fn skipped_cache_duplicate_insert_rejected() {
     let peer = [7u8; 32];
     let mk = [11u8; 32];
     s.insert(&peer, 1, mk).unwrap();
-    assert_eq!(s.insert(&peer, 1, mk).unwrap_err(), SessionError::ReplayRejected);
+    assert_eq!(
+        s.insert(&peer, 1, mk).unwrap_err(),
+        SessionError::ReplayRejected
+    );
 }
 
 #[test]
@@ -223,10 +227,7 @@ fn export_import_roundtrip_preserves_crypto_state() {
     let imported = SessionHandle::from_export(export.clone()).unwrap();
     assert_eq!(imported.session_id(), sid);
     assert_eq!(imported.epoch(), epoch);
-    assert_eq!(
-        imported.persistence_equivalence_digest(),
-        digest_alice
-    );
+    assert_eq!(imported.persistence_equivalence_digest(), digest_alice);
     assert_eq!(imported.send_wire_counter(), alice.send_wire_counter());
 
     export.anchor.state_commitment[0] ^= 0xFF;

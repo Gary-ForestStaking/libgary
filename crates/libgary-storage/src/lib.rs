@@ -10,5 +10,5 @@ pub mod wal_envelope;
 
 pub use error::StorageError;
 pub use libgary_core::engine::SessionHandle;
-pub use store::{verify_anchor, SessionStore};
+pub use store::{SessionStore, verify_anchor};
 pub use trusted_meta::TrustedAnchorMeta;

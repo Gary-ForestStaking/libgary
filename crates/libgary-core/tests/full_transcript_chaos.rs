@@ -11,8 +11,8 @@ use libgary_core::engine::{DeviceStateAnchorV1, SessionError, SessionHandle};
 use libgary_core::session::{ikm_session, okm_root_bootstrap};
 use libgary_core::transcript::{th0, th1};
 use libgary_core::x3dh::km_with_otp;
-use libgary_storage::{SessionStore, StorageError};
 use libgary_storage::wal_envelope::{decode_wal_envelope, encode_wal_envelope};
+use libgary_storage::{SessionStore, StorageError};
 use libgary_wire::{Header, OuterRecord, RelayOuterEnvelope, WireError};
 use rand_chacha::ChaCha12Rng;
 use rand_core::SeedableRng;
@@ -97,7 +97,12 @@ fn relay_forged_route_token_opaque_unchanged() {
     let (mut alice, mut bob) = paired_sessions();
     let pt = data_inner_plaintext(1, 1, b"relay-opaque").unwrap();
     let (hdr, payload) = alice.send_data_plain512_outer(&pt, &mut pad).unwrap();
-    let outer = OuterRecord { header: hdr, payload }.encode().unwrap();
+    let outer = OuterRecord {
+        header: hdr,
+        payload,
+    }
+    .encode()
+    .unwrap();
 
     let env_good = RelayOuterEnvelope {
         route_token: vec![0x01],
@@ -117,7 +122,9 @@ fn relay_forged_route_token_opaque_unchanged() {
         .opaque_bytes;
     let rec = OuterRecord::decode(&got).unwrap();
     let mut rng = ChaCha12Rng::from_seed([6u8; 32]);
-    let plain = bob.recv_data_outer(&rec.header, &rec.payload, &mut rng).unwrap();
+    let plain = bob
+        .recv_data_outer(&rec.header, &rec.payload, &mut rng)
+        .unwrap();
     assert_eq!(pt.as_slice(), plain.as_slice());
 }
 
@@ -193,10 +200,7 @@ fn invalid_header_flags_outer_encode_rejected() {
         header: hdr,
         payload: vec![0u8; 8],
     };
-    assert_eq!(
-        rec.encode().unwrap_err(),
-        WireError::InvalidHeaderFlags
-    );
+    assert_eq!(rec.encode().unwrap_err(), WireError::InvalidHeaderFlags);
 }
 
 #[test]
@@ -365,7 +369,8 @@ fn reset_half_open_epoch_isolation() {
     alice.recompute_anchor_commitment();
     bob.recompute_anchor_commitment();
 
-    bob.enter_reset_pending_after_rebootstrap(old_e, None).unwrap();
+    bob.enter_reset_pending_after_rebootstrap(old_e, None)
+        .unwrap();
 
     let mut pad = ChaCha12Rng::from_seed([0x40u8; 32]);
     let pt = data_inner_plaintext(1, 1, b"delayed-pre-reset-data").unwrap();

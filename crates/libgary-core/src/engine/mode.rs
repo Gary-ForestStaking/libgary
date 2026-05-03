@@ -11,11 +11,15 @@ pub const RESET_HALF_OPEN_DEFAULT_DRAIN_TICKS: u64 = 86_400;
 /// discriminant that carries an epoch field.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SessionMode {
-    Active { epoch: u32 },
+    Active {
+        epoch: u32,
+    },
     ResetPending {
         old_epoch: u32,
         new_epoch: u32,
         drain_until_ticks: Option<u64>,
     },
-    Bootstrapping { epoch: u32 },
+    Bootstrapping {
+        epoch: u32,
+    },
 }
