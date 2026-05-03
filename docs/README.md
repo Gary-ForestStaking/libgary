@@ -25,6 +25,8 @@ Normative and supporting documents for **v0 protocol** (private 1:1 messenger).
 - README prose vs **v0-protocol.md** → protocol wins.  
 - Handshake transcript / control-plane AEAD vs **v0-protocol.md** → **[v0-handshake.md](v0-handshake.md)** wins.
 
+Documentation in this directory is licensed under the [Apache License, Version 2.0](../LICENSE).
+
 Regenerate cryptographic fixtures:
 
 ```bash

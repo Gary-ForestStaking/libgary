@@ -4,6 +4,8 @@ End-to-end encrypted messenger with Signal-like security, built from standard pr
 
 **Normative specs:** [docs/v0-protocol.md](docs/v0-protocol.md) (framing + ratchet) and [docs/v0-handshake.md](docs/v0-handshake.md) (transcripts + handshake/control AEAD) — index: [docs/README.md](docs/README.md).
 
+**License:** [Apache License 2.0](LICENSE).
+
 ## Non-goals (for first shipping version)
 
 Do **not** start with: groups, voice/video calls, public usernames, bots, channels, or federation. Add those only after the 1:1 core is specified, implemented, and reviewed.
