@@ -10,7 +10,7 @@ This repository contains the **normative specs** under [`docs/`](docs/README.md)
 
 **v0 freeze discipline:** single canonical execution path [`docs/v0-golden-path.md`](docs/v0-golden-path.md); completeness gates [`docs/v0-complete-checklist.md`](docs/v0-complete-checklist.md).
 
-**License:** [Apache License 2.0](LICENSE).
+**License:** [Apache License 2.0](LICENSE). **Security:** [SECURITY.md](SECURITY.md).
 
 ---
 
@@ -45,7 +45,7 @@ cargo test --workspace --locked
 cargo test --workspace --locked --all-features
 ```
 
-CI runs the **all-features** suite (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+CI (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs: **`cargo test --workspace --locked --all-features`**, **`cargo audit`** (RustSec), **`cargo deny check`** (licenses + advisories via [`deny.toml`](deny.toml)), and **Python `tools/gen_test_vectors.py` stdout diff** against [`tools/fixtures/gen_test_vectors.stdout.expected`](tools/fixtures/gen_test_vectors.stdout.expected) so generator drift breaks the build.
 
 ### Embedder API (Rust)
 
@@ -104,7 +104,7 @@ Full detail remains in **`docs/v0-protocol.md`**. At a glance:
 2. **Prekeys** — signed prekey + one-time prekeys for async starts.  
 3. **Handshake** — X25519 / X3DH-shaped transcript binding + Ed25519 authentication scope in spec.  
 4. **Ratchet** — Double Ratchet (root, chains, bounded skip cache, explicit DH rotation rules).  
-5. **Payloads** — AEAD (v0 uses ChaCha20-Poly1305 family per spec); explicit nonces and AD binding.  
+5. **Payloads** — **XChaCha20-Poly1305 (IETF)**: 24-byte nonce, 16-byte Poly1305 tag, per [`docs/v0-protocol.md`](docs/v0-protocol.md) — not the shorter-nonce ChaCha20-Poly1305 variant; explicit AD binding on headers/wire fields as specified.  
 6. **Replay** — counters, ordering window, reset semantics specified in protocol.  
 7. **Recovery** — reset vs continuation; multi-device deferred unless explicitly scoped.  
 8. **Attachments** — **[docs/v0-attachments.md](docs/v0-attachments.md)**.
@@ -113,9 +113,9 @@ Full detail remains in **`docs/v0-protocol.md`**. At a glance:
 
 Canonical records: magic/version, message type, bounded fields, inner `length || bytes`, declared endianness — **normative detail and limits in [`docs/v0-protocol.md`](docs/v0-protocol.md)** and wire tests under `crates/libgary-wire/tests/`.
 
-## Server role (trusted delivery only)
+## Server role (relay)
 
-Directory / relay of opaque blobs / wakeup push / attachment relay — **must not** decrypt application payloads.
+The server provides directory lookup, **best-effort** blob relay, wakeup push, and (where applicable) attachment relay. It **must not** read application plaintext; metadata visibility (timing, sizes, sender identity in v0 before sealed sender) follows [`docs/threat-model.md`](docs/threat-model.md) and [`docs/privacy-architecture.md`](docs/privacy-architecture.md) — not “trusted” end-to-end beyond delivery semantics.
 
 ## Tech stack (directional)
 
@@ -128,8 +128,7 @@ Directory / relay of opaque blobs / wakeup push / attachment relay — **must no
 ## Future (explicitly not v1)
 
 - **Disappearing messages** — [`docs/privacy-architecture.md`](docs/privacy-architecture.md) §12.  
-- **Group chat / MLS** — separate track from 1:1 v0.  
-- **XMPP / Prosody** — only if you ship XMPP; not implied by the custom relay design.
+- **Group chat / MLS** — separate track from 1:1 v0.
 
 ## Next steps
 

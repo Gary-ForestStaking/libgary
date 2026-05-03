@@ -15,3 +15,44 @@ jobs:
           toolchain: "1.95"
       - name: Cargo test (workspace, all features)
         run: cargo test --workspace --locked --all-features
+
+  cargo-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.95"
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+      - name: cargo audit (RustSec advisory DB)
+        run: cargo audit
+
+  cargo-deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.95"
+      # 0.19+ parses RustSec CVSS:4.0 fields in advisory-db (0.18 fails CI).
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny@0.19.4
+      - name: cargo deny check (licenses, advisories, bans)
+        run: cargo deny check
+
+  doc-vectors-python-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Python deps (generator == docs vectors)
+        run: pip install cryptography pynacl
+      - name: Python gen_test_vectors stdout matches golden snapshot
+        run: |
+          python3 tools/gen_test_vectors.py > /tmp/vectors.out
+          diff -u tools/fixtures/gen_test_vectors.stdout.expected /tmp/vectors.out
