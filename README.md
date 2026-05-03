@@ -8,6 +8,8 @@ This repository contains the **normative specs** under [`docs/`](docs/README.md)
 
 **Shipping boundary for embedders:** [`docs/session-handle-boundary.md`](docs/session-handle-boundary.md) (ingress rule, WAL / Option A, errors, FFI rules).
 
+**v0 freeze discipline:** single canonical execution path [`docs/v0-golden-path.md`](docs/v0-golden-path.md); completeness gates [`docs/v0-complete-checklist.md`](docs/v0-complete-checklist.md).
+
 **License:** [Apache License 2.0](LICENSE).
 
 ---
