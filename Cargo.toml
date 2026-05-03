@@ -1,0 +1,13 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/libgary-core",
+    "crates/libgary-wire",
+    "crates/libgary-storage",
+    "crates/libgary-attach",
+    "crates/libgary-testvec",
+]
+
+[workspace.package]
+edition = "2021"
+license = "Apache-2.0"
