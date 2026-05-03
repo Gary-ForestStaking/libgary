@@ -19,6 +19,7 @@ Normative and supporting documents for **v0 protocol** (private 1:1 messenger).
 | [v0-attachments.md](v0-attachments.md) | Attachment key hierarchy, manifest, relay rules (references packet framing in v0-protocol). |
 | [test-vectors.md](test-vectors.md) | Hex fixtures; implementations **must** match. |
 | [state-machine.md](state-machine.md) | Session lifecycle and valid transitions. |
+| [rust-toolchain-policy.md](rust-toolchain-policy.md) | Pinned Rust toolchain / MSRV bump checklist (`rust-toolchain.toml`, workspace `Cargo.toml`). |
 
 **Rules:**
 

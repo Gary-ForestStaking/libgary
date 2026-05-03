@@ -2,6 +2,7 @@
 name = "libgary-wire"
 version = "0.1.0"
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 description = "libgary v0 wire types (Header, handshake bodies)"
 

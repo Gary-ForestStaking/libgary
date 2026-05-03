@@ -2,6 +2,7 @@
 name = "libgary-attach"
 version = "0.1.0"
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 description = "libgary v0 attachment crypto (stub)"
 

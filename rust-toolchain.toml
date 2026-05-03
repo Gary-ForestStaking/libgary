@@ -1,0 +1,10 @@
+[toolchain]
+# Pin matches MSRV in workspace `Cargo.toml`. Bump only via reviewed upgrade (see `docs/rust-toolchain-policy.md`).
+channel = "1.95.0"
+profile = "minimal"
+components = ["rustfmt", "clippy", "rust-src"]
+targets = [
+    "aarch64-apple-ios",
+    "aarch64-apple-ios-sim",
+    "x86_64-apple-darwin",
+]
