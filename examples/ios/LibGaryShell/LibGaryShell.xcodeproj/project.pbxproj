@@ -11,6 +11,8 @@
 		211104E72C884E11AA220003 /* LibGaryFFI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 211104E72C884E11AA220013 /* LibGaryFFI.swift */; };
 		211104E72C884E11AA220005 /* GaryPeerTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 211104E72C884E11AA220017 /* GaryPeerTransport.swift */; };
 		211104E72C884E11AA220006 /* PeerChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 211104E72C884E11AA220018 /* PeerChatView.swift */; };
+		211104E72C884E11AA220007 /* PeerInviteKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 211104E72C884E11AA220077 /* PeerInviteKit.swift */; };
+		211104E72C884E11AA220008 /* InviteTranscriptStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 211104E72C884E11AA220078 /* InviteTranscriptStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -20,6 +22,8 @@
 		211104E72C884E11AA220015 /* LibGaryShell.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LibGaryShell.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		211104E72C884E11AA220017 /* GaryPeerTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaryPeerTransport.swift; sourceTree = "<group>"; };
 		211104E72C884E11AA220018 /* PeerChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeerChatView.swift; sourceTree = "<group>"; };
+		211104E72C884E11AA220077 /* PeerInviteKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeerInviteKit.swift; sourceTree = "<group>"; };
+		211104E72C884E11AA220078 /* InviteTranscriptStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteTranscriptStore.swift; sourceTree = "<group>"; };
 		211104E72C884E11AA220019 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		211104E72C884E11AA220074 /* LibGaryShell.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LibGaryShell.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -50,6 +54,8 @@
 				211104E72C884E11AA220013 /* LibGaryFFI.swift */,
 				211104E72C884E11AA220017 /* GaryPeerTransport.swift */,
 				211104E72C884E11AA220018 /* PeerChatView.swift */,
+				211104E72C884E11AA220077 /* PeerInviteKit.swift */,
+				211104E72C884E11AA220078 /* InviteTranscriptStore.swift */,
 				211104E72C884E11AA220019 /* Info.plist */,
 				211104E72C884E11AA220074 /* LibGaryShell.entitlements */,
 				211104E72C884E11AA220014 /* LibGaryShell-Bridging-Header.h */,
@@ -137,6 +143,8 @@
 				211104E72C884E11AA220003 /* LibGaryFFI.swift in Sources */,
 				211104E72C884E11AA220005 /* GaryPeerTransport.swift in Sources */,
 				211104E72C884E11AA220006 /* PeerChatView.swift in Sources */,
+				211104E72C884E11AA220007 /* PeerInviteKit.swift in Sources */,
+				211104E72C884E11AA220008 /* InviteTranscriptStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

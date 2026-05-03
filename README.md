@@ -24,6 +24,7 @@ This repository contains the **normative specs** under [`docs/`](docs/README.md)
 | [`crates/libgary-ffi`](crates/libgary-ffi) | Minimal **C ABI** façade (opaque session + safe free path — extend deliberately) |
 | [`crates/libgary-attach`](crates/libgary-attach) | Attachment crypto scaffolding (v0 attachments spec) |
 | [`crates/libgary-testvec`](crates/libgary-testvec) | Fixture placeholders / linkage |
+| [`crates/libgary-relay`](crates/libgary-relay) | Minimal **WebSocket relay** (internet transport; opaque binary tunnel for paired host/guest) |
 
 Toolchain: **Rust 1.95** (see workspace [`Cargo.toml`](Cargo.toml) `rust-version`).
 

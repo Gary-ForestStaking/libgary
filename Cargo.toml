@@ -7,6 +7,7 @@ members = [
     "crates/libgary-storage",
     "crates/libgary-attach",
     "crates/libgary-testvec",
+    "crates/libgary-relay",
 ]
 
 [workspace.package]

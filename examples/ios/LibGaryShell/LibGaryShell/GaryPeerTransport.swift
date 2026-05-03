@@ -24,6 +24,14 @@ final class GaryPeerTransport: ObservableObject {
     private let role: RoomRole
     /// Host advertises `lgry-host-<uuid>` so guests only open TCP to real rooms (not stray browse noise).
     private let bonjourInstanceName: String
+    /// Guest: optional exact `lgry-host-…` Bonjour name from an invite link.
+    private let preferredHostBonjourName: String?
+
+    /// When set, skip Bonjour/TCP and use `libgary-relay` (`wss`) — opaque binary tunnel after JSON join.
+    private let relayWebSocketURL: URL?
+    private var urlSession: URLSession?
+    private var webSocketTask: URLSessionWebSocketTask?
+    private var relayLinked = false
 
     /// `true` when this run chose “Host a room” (listener side).
     var isRoomHost: Bool { role == .host }
@@ -51,17 +59,58 @@ final class GaryPeerTransport: ObservableObject {
 
     var onInboundDecrypt: ((String, String) -> Void)?
 
-    init(nickname: String, pinDiscoveryTag: String, role: RoomRole) {
+    init(
+        nickname: String,
+        pinDiscoveryTag: String,
+        role: RoomRole,
+        preferredHostBonjourName: String? = nil,
+        /// Invite-link host: reuse saved UUID so `libgaryshell://` targets stay valid across restarts. Disposable host: pass `nil` for a fresh id each session.
+        stableHostBonjourUUID: String? = nil,
+        relayWebSocketURL: URL? = nil
+    ) {
         self.pinDiscoveryTag = pinDiscoveryTag
         self.displayNickname = nickname
         self.role = role
-        let uuid = UUID().uuidString.lowercased()
+        self.relayWebSocketURL = relayWebSocketURL
         switch role {
         case .host:
+            let uuid: String
+            if let stable = stableHostBonjourUUID?.lowercased(),
+               UUID(uuidString: stable) != nil {
+                uuid = stable
+            } else {
+                uuid = UUID().uuidString.lowercased()
+            }
             self.bonjourInstanceName = "lgry-host-\(uuid)"
+            self.preferredHostBonjourName = nil
         case .guest:
+            let uuid = UUID().uuidString.lowercased()
             self.bonjourInstanceName = "lgry-guest-\(uuid)"
+            self.preferredHostBonjourName = preferredHostBonjourName?.lowercased()
         }
+    }
+
+    /// UUID suffix after `lgry-host-`; embed in invite links for targeted joins.
+    var inviteRoomToken: String? {
+        guard role == .host, bonjourInstanceName.hasPrefix("lgry-host-") else { return nil }
+        return String(bonjourInstanceName.dropFirst("lgry-host-".count))
+    }
+
+    /// Stable key for invite-link transcript persistence (host token or guest’s targeted host `lgry-host-…`).
+    var invitePersistentRoomUUID: String? {
+        switch role {
+        case .host:
+            return inviteRoomToken
+        case .guest:
+            guard let pref = preferredHostBonjourName, pref.hasPrefix("lgry-host-") else { return nil }
+            let suffix = String(pref.dropFirst("lgry-host-".count))
+            return suffix.isEmpty ? nil : suffix
+        }
+    }
+
+    func inviteURL(pinNormalized: String) -> URL? {
+        guard role == .host, let token = inviteRoomToken else { return nil }
+        return PeerInviteKit.makeInviteURL(pinNormalized: pinNormalized, roomUUID: token)
     }
 
     deinit {
@@ -75,6 +124,11 @@ final class GaryPeerTransport: ObservableObject {
         browser = nil
         connection?.cancel()
         connection = nil
+        relayLinked = false
+        webSocketTask?.cancel(with: .goingAway, reason: nil)
+        webSocketTask = nil
+        urlSession?.invalidateAndCancel()
+        urlSession = nil
         rxBuffer.removeAll()
         guestPendingConnections.removeAll()
         guestFailedEndpointKeys.removeAll()
@@ -90,7 +144,8 @@ final class GaryPeerTransport: ObservableObject {
     }
 
     private func refreshCanSend() {
-        let ok = crypto != nil && connection?.state == .ready
+        let tcpReady = connection?.state == .ready
+        let ok = crypto != nil && (tcpReady || relayLinked)
         publishMain {
             self.canSend = ok
         }
@@ -124,6 +179,16 @@ final class GaryPeerTransport: ObservableObject {
         stopAll(clearStatus: false)
         rxBuffer.removeAll()
 
+        if relayWebSocketURL != nil {
+            publishMain {
+                self.statusLine = self.role == .host
+                    ? "Hosting — connecting to relay…"
+                    : "Joining — connecting to relay…"
+            }
+            queue.async { self.startRelaySession() }
+            return
+        }
+
         switch role {
         case .host:
             publishMain { self.statusLine = "Hosting — starting room…" }
@@ -132,6 +197,13 @@ final class GaryPeerTransport: ObservableObject {
             publishMain { self.statusLine = "Joining — looking for a host on the network…" }
             startBonjourBrowser(params: tcpParameters())
         }
+    }
+
+    /// Guest only: stop and restart browse/connect without clearing the PIN session on the controller.
+    func retryGuestDiscovery() {
+        guard role == .guest else { return }
+        publishMain { self.statusLine = "Joining — scanning again…" }
+        startFindingPeers()
     }
 
     // MARK: - Listener (TCP acceptor / crypto responder)
@@ -397,10 +469,12 @@ final class GaryPeerTransport: ObservableObject {
         case let .service(name, type, _, _):
             guard bonjourTypesMatch(type, Self.bonjourType) else { return }
             guard name.hasPrefix("lgry-host-") else { return }
+            if let pref = preferredHostBonjourName, name.lowercased() != pref { return }
             remoteName = name
         default:
             guard let n = bonjourInstanceName(from: endpoint)
                 ?? scrapeHostInstanceName(endpoint.debugDescription) else { return }
+            if let pref = preferredHostBonjourName, n.lowercased() != pref { return }
             remoteName = n
         }
 
@@ -585,6 +659,9 @@ final class GaryPeerTransport: ObservableObject {
         guestActiveEndpointKey = nil
         connection?.cancel()
         connection = nil
+        relayLinked = false
+        webSocketTask?.cancel(with: .goingAway, reason: nil)
+        webSocketTask = nil
         crypto = nil
         publishMain {
             self.cryptoSession = nil
@@ -605,7 +682,12 @@ final class GaryPeerTransport: ObservableObject {
     // MARK: - Send
 
     func sendChat(_ text: String) {
-        guard let crypto, let conn = connection, conn.state == .ready else {
+        guard let crypto else {
+            publishMain { self.statusLine = "Session not ready yet" }
+            return
+        }
+        let tcpReady = connection?.state == .ready
+        guard tcpReady || relayLinked else {
             publishMain { self.statusLine = "Session not ready yet" }
             return
         }
@@ -623,6 +705,26 @@ final class GaryPeerTransport: ObservableObject {
         pkt.append(Data(bytes: &beLen, count: 4))
         pkt.append(wire)
 
+        if relayLinked, let task = webSocketTask {
+            task.send(.data(pkt)) { [weak self] err in
+                guard let self else { return }
+                self.publishMain {
+                    if let err {
+                        self.statusLine = "Send error: \(err.localizedDescription)"
+                        return
+                    }
+                    self.lastSendRc = GARY_CODE_OK
+                    self.statusLine = "Linked — sent \(wire.count) B"
+                }
+            }
+            return
+        }
+
+        guard let conn = connection else {
+            publishMain { self.statusLine = "Session not ready yet" }
+            return
+        }
+
         conn.send(content: pkt, completion: .contentProcessed { [weak self] err in
             guard let self else { return }
             self.publishMain {
@@ -634,5 +736,166 @@ final class GaryPeerTransport: ObservableObject {
                 self.statusLine = "Linked — sent \(wire.count) B"
             }
         })
+    }
+
+    // MARK: - Internet relay (WebSocket)
+
+    private func relayRoomIdString() -> String? {
+        switch role {
+        case .host:
+            return inviteRoomToken
+        case .guest:
+            return invitePersistentRoomUUID
+        }
+    }
+
+    private func startRelaySession() {
+        guard let relayURL = relayWebSocketURL else { return }
+        guard let roomId = relayRoomIdString() else {
+            publishMain {
+                self.statusLine = "Relay needs a room id — open the invite link or host invite-link flow."
+            }
+            return
+        }
+
+        let cfg = URLSessionConfiguration.default
+        cfg.waitsForConnectivity = true
+        let sess = URLSession(configuration: cfg)
+        urlSession = sess
+        let task = sess.webSocketTask(with: relayURL)
+        webSocketTask = task
+        task.resume()
+
+        let roleStr = role == .host ? "host" : "guest"
+        let payload: [String: Any] = [
+            "room": roomId,
+            "pin_tag": pinDiscoveryTag,
+            "role": roleStr,
+        ]
+        guard JSONSerialization.isValidJSONObject(payload),
+              let body = try? JSONSerialization.data(withJSONObject: payload),
+              let jsonText = String(data: body, encoding: .utf8)
+        else {
+            publishMain { self.statusLine = "Relay join encode failed" }
+            return
+        }
+
+        task.send(.string(jsonText)) { [weak self] err in
+            guard let self else { return }
+            self.queue.async {
+                if let err {
+                    self.publishMain {
+                        self.statusLine = "Relay send failed: \(err.localizedDescription)"
+                    }
+                    return
+                }
+                self.receiveRelayJoinResponse()
+            }
+        }
+    }
+
+    private func receiveRelayJoinResponse() {
+        guard let task = webSocketTask else { return }
+        task.receive { [weak self] result in
+            guard let self else { return }
+            self.queue.async {
+                switch result {
+                case .success(let message):
+                    switch message {
+                    case .string(let text):
+                        guard self.consumeRelayJoinAck(text) else {
+                            self.publishMain { self.statusLine = "Relay rejected join (PIN / role / duplicate)." }
+                            self.teardownConnectionOnly(markGuestAttemptFailed: self.role == .guest)
+                            return
+                        }
+                        self.bindCrypto(isInviter: self.role == .guest)
+                        self.relayLinked = true
+                        self.publishMain {
+                            self.connectedPeerNames = ["Peer"]
+                            self.statusLine = "Linked — say hello"
+                            self.refreshCanSend()
+                        }
+                        self.rxBuffer.removeAll()
+                        self.relayReceiveLoop()
+                    case .data:
+                        self.publishMain { self.statusLine = "Relay: unexpected data before join ack" }
+                        self.teardownConnectionOnly(markGuestAttemptFailed: self.role == .guest)
+                    @unknown default:
+                        break
+                    }
+                case .failure(let err):
+                    self.publishMain { self.statusLine = "Relay error: \(err.localizedDescription)" }
+                    self.teardownConnectionOnly(markGuestAttemptFailed: self.role == .guest)
+                }
+            }
+        }
+    }
+
+    private func consumeRelayJoinAck(_ text: String) -> Bool {
+        guard let data = text.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let ok = obj["ok"] as? Bool,
+              ok
+        else {
+            return false
+        }
+        return true
+    }
+
+    private func relayReceiveLoop() {
+        guard let task = webSocketTask else { return }
+        task.receive { [weak self] result in
+            guard let self else { return }
+            self.queue.async {
+                switch result {
+                case .success(let message):
+                    switch message {
+                    case .data(let chunk):
+                        self.rxBuffer.append(chunk)
+                        self.processRelayInboundBuffer()
+                    case .string:
+                        self.publishMain { self.statusLine = "Unexpected text on data channel" }
+                    @unknown default:
+                        break
+                    }
+                case .failure:
+                    self.teardownConnectionOnly(markGuestAttemptFailed: self.role == .guest)
+                }
+            }
+        }
+    }
+
+    private func processRelayInboundBuffer() {
+        while rxBuffer.count >= 4 {
+            let rawLen = (UInt32(rxBuffer[0]) << 24)
+                | (UInt32(rxBuffer[1]) << 16)
+                | (UInt32(rxBuffer[2]) << 8)
+                | UInt32(rxBuffer[3])
+            guard rawLen > 0, rawLen <= 1024 * 1024 else {
+                publishMain { self.statusLine = "Bad frame length" }
+                teardownConnectionOnly(markGuestAttemptFailed: role == .guest)
+                return
+            }
+            let need = 4 + Int(rawLen)
+            guard rxBuffer.count >= need else {
+                relayReceiveLoop()
+                return
+            }
+            let payload = rxBuffer.subdata(in: 4..<need)
+            rxBuffer.removeFirst(need)
+
+            guard let crypto else { return }
+            let rc = crypto.ingestOuter(payload)
+            publishMain {
+                self.lastRecvRc = rc
+                if rc == GARY_CODE_OK {
+                    let plain = crypto.lastInboundUtf8String()
+                    self.onInboundDecrypt?("Peer", plain)
+                } else {
+                    self.statusLine = "Ingest rc=\(rc) \(crypto.lastErrorCString())"
+                }
+            }
+        }
+        relayReceiveLoop()
     }
 }

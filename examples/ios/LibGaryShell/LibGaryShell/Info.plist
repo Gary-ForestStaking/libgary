@@ -8,5 +8,16 @@
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>LibGary finds nearby devices on your local network for encrypted peer chat.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>dev.libgary.peer.invite</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>libgaryshell</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
