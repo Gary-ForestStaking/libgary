@@ -14,7 +14,15 @@ This repository pins the compiler with **`rust-toolchain.toml`** (via **rustup**
 - **Channel:** see **`rust-toolchain.toml`** (e.g. `1.95.0`).
 - **MSRV:** **`rust-version`** in root **`Cargo.toml`** (workspace package metadata).
 
-Homebrew’s standalone `rustc` may ignore `rust-toolchain.toml`; use **rustup** locally and in CI so the pin is enforced.
+Homebrew’s standalone `rustc` may ignore `rust-toolchain.toml`; use **rustup** locally and on **Linux** so the pin is enforced.
+
+## Linux and macOS hosts
+
+1. Install **rustup** ([https://rustup.rs/](https://rustup.rs/)) — on Linux use the shell installer; avoid distro `rustc` only if you want this repo’s pinned version.
+2. Clone the repo and run **`cargo test --workspace`** from the repo root. Rustup reads **`rust-toolchain.toml`**, installs **1.95.0**, components, and the listed **extra** targets.
+3. Your **host** standard library (e.g. `x86_64-unknown-linux-gnu` or `aarch64-unknown-linux-gnu` on Linux, `aarch64-apple-darwin` / `x86_64-apple-darwin` on macOS) is installed automatically for the machine you’re on. The **`targets`** list in **`rust-toolchain.toml`** adds cross-target `rust-std` so Mac and Linux machines stay aligned when building or CI-checking the other OS.
+
+Static musl builds (`*-unknown-linux-musl`) are not pinned here yet; add a triple under **`[toolchain].targets`** if you standardize on musl for releases.
 
 ## Bump checklist
 

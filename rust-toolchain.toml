@@ -7,4 +7,7 @@ targets = [
     "aarch64-apple-ios",
     "aarch64-apple-ios-sim",
     "x86_64-apple-darwin",
+    # Linux (glibc) — use on Debian/Ubuntu/Fedora/etc.; host std is always installed; these keep Mac/Linux dev aligned.
+    "aarch64-unknown-linux-gnu",
+    "x86_64-unknown-linux-gnu",
 ]
