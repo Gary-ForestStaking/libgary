@@ -279,7 +279,7 @@ struct PeerChatView: View {
             Text("How do you want to connect?")
                 .font(.title2.weight(.semibold))
 
-            Text("Same Wi‑Fi for both paths. Pick what fits your hangout.")
+            Text("Disposable needs nearby Bonjour; invite uses the relay at lgry.monmilios.com over TLS.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -599,7 +599,7 @@ private struct ActivePeerSessionView: View {
         case .disposable:
             return "Disposable — this chat isn’t stored. Leaving ends the room."
         case .inviteLink:
-            return "Invite link — messages stay on this device, encrypted; not on a cloud server. Same Wi‑Fi for live chat."
+            return "Invite link — messages stay on this device, encrypted; not on a cloud server. Live chat uses lgry.monmilios.com (relay)."
         }
     }
 
@@ -608,7 +608,7 @@ private struct ActivePeerSessionView: View {
         case .disposable:
             return "Disposable room — ends when you leave; chat isn’t saved."
         case .inviteLink:
-            return "Invite link — earlier messages on this phone load below (encrypted on disk). Same Wi‑Fi to connect live."
+            return "Invite link — earlier messages on this phone load below (encrypted on disk). Join via relay when your peer connects."
         }
     }
 
