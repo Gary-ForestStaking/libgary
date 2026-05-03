@@ -4,6 +4,7 @@ Normative and supporting documents for **v0 protocol** (private 1:1 messenger).
 
 | Document | Purpose |
 |----------|---------|
+| [session-handle-boundary.md](session-handle-boundary.md) | **Operational embedder contract**: ingress, WAL/Option A, RESET runtime-only, save/load, errors, FFI shape. |
 | [privacy-architecture.md](privacy-architecture.md) | Extreme-privacy product choices (identity, discovery, relay, push, logs, transparency). |
 | [v0-invite-uri.md](v0-invite-uri.md) | `gary://invite/v1/…` self-contained bootstrap blob. |
 | [v0.5-sealed-sender.md](v0.5-sealed-sender.md) | Placeholder for relay-blind sender (**v0.5**). |

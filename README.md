@@ -2,9 +2,67 @@
 
 End-to-end encrypted messenger with Signal-like security, built from standard primitives (not libsignal). **v1 is intentionally narrow**; protocol work is named internally **v0 protocol**.
 
-**Normative specs:** [docs/v0-protocol.md](docs/v0-protocol.md) (framing + ratchet) and [docs/v0-handshake.md](docs/v0-handshake.md) (transcripts + handshake/control AEAD) — index: [docs/README.md](docs/README.md).
+This repository contains the **normative specs** under [`docs/`](docs/README.md) and a **Rust reference workspace** (ratchet engine, wire codec, atomic WAL persistence, FFI stub).
+
+**Normative specs:** [`docs/v0-protocol.md`](docs/v0-protocol.md) (framing + ratchet) and [`docs/v0-handshake.md`](docs/v0-handshake.md) (transcripts + handshake/control AEAD) — index: [`docs/README.md`](docs/README.md).
+
+**Shipping boundary for embedders:** [`docs/session-handle-boundary.md`](docs/session-handle-boundary.md) (ingress rule, WAL / Option A, errors, FFI rules).
 
 **License:** [Apache License 2.0](LICENSE).
+
+---
+
+## Rust workspace
+
+| Crate | Role |
+|--------|------|
+| [`crates/libgary-core`](crates/libgary-core) | X3DH session material, HKDF tree helpers, AEAD, **`SessionHandle`** ratchet engine |
+| [`crates/libgary-wire`](crates/libgary-wire) | Headers, `OuterRecord`, relay envelope, `PAD()` |
+| [`crates/libgary-storage`](crates/libgary-storage) | Atomic LGW1 WAL + trusted meta / rollback detection |
+| [`crates/libgary-ffi`](crates/libgary-ffi) | Minimal **C ABI** façade (opaque session + safe free path — extend deliberately) |
+| [`crates/libgary-attach`](crates/libgary-attach) | Attachment crypto scaffolding (v0 attachments spec) |
+| [`crates/libgary-testvec`](crates/libgary-testvec) | Fixture placeholders / linkage |
+
+Toolchain: **Rust 1.95** (see workspace [`Cargo.toml`](Cargo.toml) `rust-version`).
+
+### Build and test
+
+```bash
+cargo build --workspace --locked
+```
+
+**Default tests** (CI-safe subset — includes golden persistence digest + doc vectors):
+
+```bash
+cargo test --workspace --locked
+```
+
+**Full protocol / chaos integration tests** (enable crate feature `protocol-test-api` on `libgary-core`):
+
+```bash
+cargo test --workspace --locked --all-features
+```
+
+CI runs the **all-features** suite (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+
+### Embedder API (Rust)
+
+Use **`SessionHandle`** only at the application boundary (crate-private ratchet `Session`). Ingress on the wire should go through **`handle_inbound_outer`** unless your caller mirrors the same epoch / RESET policy; details are fixed in [`docs/session-handle-boundary.md`](docs/session-handle-boundary.md).
+
+Advanced drills (`RESET` transitions, mode introspection) compile only with **`protocol-test-api`** — **do not enable that feature** in production embedding (`default-features = false` on the dependency).
+
+Persistence is **`SessionStore`** in `libgary-storage` (`save_session` / `load_session`), not extra methods on the handle.
+
+### Fuzzing
+
+The [`fuzz/`](fuzz/) tree is a separate Cargo workspace. Typical ingress fuzz:
+
+```bash
+cd fuzz
+cargo fuzz run handle_inbound_outer
+```
+
+---
 
 ## Non-goals (for first shipping version)
 
@@ -19,7 +77,7 @@ Do **not** start with: groups, voice/video calls, public usernames, bots, channe
 
 ## Privacy posture (“extreme privacy” defaults)
 
-Optimize for **privacy over convenience**: **[full 32-byte `account_id`](docs/v0-protocol.md)** (SHA-256 of Ed25519 pk), **invite / QR-only** discovery ([docs/v0-invite-uri.md](docs/v0-invite-uri.md)), **wake-only** push, **minimal server logs**, **[relay outer envelope](docs/v0-protocol.md)** (`route_token` only—opaque E2E inside), **universal `PAD()` buckets** §6.5, **sealed sender** deferred to **[v0.5](docs/v0.5-sealed-sender.md)**, **safety numbers before transparency logs**, **invite-only** growth, **backup off by default** — see [docs/privacy-architecture.md](docs/privacy-architecture.md).
+Optimize for **privacy over convenience**: **[full 32-byte `account_id`](docs/v0-protocol.md)** (SHA-256 of Ed25519 pk), **invite / QR-only** discovery ([`docs/v0-invite-uri.md`](docs/v0-invite-uri.md)), **wake-only** push, **minimal server logs**, **[relay outer envelope](docs/v0-protocol.md)** (`route_token` only—opaque E2E inside), **universal `PAD()` buckets** §6.5, **sealed sender** deferred to **[v0.5](docs/v0.5-sealed-sender.md)**, **safety numbers before transparency logs**, **invite-only** growth, **backup off by default** — see [`docs/privacy-architecture.md`](docs/privacy-architecture.md).
 
 ### Normative sequence (stop spec drift)
 
@@ -36,113 +94,43 @@ Optimize for **privacy over convenience**: **[full 32-byte `account_id`](docs/v0
 11. Invite blob — **[docs/v0-invite-uri.md](docs/v0-invite-uri.md)**  
 12. Sealed sender mini-spec — **[docs/v0.5-sealed-sender.md](docs/v0.5-sealed-sender.md)** (after core stable)
 
-## Protocol stack (v0)
+## Protocol stack (v0) — summary
 
-### 1. Identity
+Full detail remains in **`docs/v0-protocol.md`**. At a glance:
 
-- Long-term **Ed25519** identity keypair.
-- Stored via **Apple Keychain** / Secure Enclave–friendly APIs on Apple platforms.
-- **Public identity** published to your server (directory).
-
-### 2. Prekeys (async messaging)
-
-- **Signed prekey** (medium-term, rotates periodically).
-- **One-time prekeys** (typical upload bucket: **100–500**; replenish on connect).
-
-Together this defines **how encrypted sessions start when the peer is offline**.
-
-### 3. Handshake
-
-- Use **X25519** with **multiple DH exchanges** (X3DH-shaped construction).
-- Derive shared secret via a **hash-based KDF** (e.g. HKDF-SHA-256, or a libsodium-consistent choice)—specified **byte-for-byte** (inputs, labels, lengths).
-- **Bind identities** in the transcript (both peers’ identity keys and relevant prekey material) so the server cannot silently reroute sessions.
-- **Authenticate** critical handshake material with **Ed25519** (exact signing scope belongs in the spec).
-
-### 4. Ratchet (core session)
-
-Implement the standard Double Ratchet structure:
-
-- Root key  
-- Send / receive chains  
-- Skipped-message key cache (**bounded**; eviction + DoS limits are mandatory)  
-- DH ratchet on rotation rules you define explicitly  
-
-Document **when** ratchet steps occur and how **post-compromise** behavior works.
-
-### 5. Encrypt payloads
-
-- **XChaCha20-Poly1305** for message payloads.
-- Define **nonce construction** and **associated data** so headers are cryptographically bound to ciphertext (**no nonce reuse**).
-
-### 6. Replay handling
-
-Specify in the spec:
-
-- Monotonic counters / chain identifiers per direction  
-- Duplicate and out-of-order policy within an accepted window  
-- Behavior on large jumps / reset  
-
-### 7. Recovery
-
-Document:
-
-- Local state loss vs compromise  
-- Session reset vs continuation  
-- Multi-device is **out of scope** until v1 is stable unless you add an explicit later phase  
-
-### 8. Attachments (v0 attachment cryptosystem)
-
-Forward secrecy for files requires a **random file key**, **HKDF-derived** chunk keys/nonces, an **authenticated manifest**, optional **Merkle** chunk integrity, **short-lived download tokens**, **no plaintext transcoding or thumbnails** on the relay, **random blob IDs** (no plaintext-hash dedup), and a strict **local cache / backup** story.
-
-Normative detail: **[docs/v0-attachments.md](docs/v0-attachments.md)**.
+1. **Identity** — Ed25519 long-term keys; Apple-friendly secure storage on clients.  
+2. **Prekeys** — signed prekey + one-time prekeys for async starts.  
+3. **Handshake** — X25519 / X3DH-shaped transcript binding + Ed25519 authentication scope in spec.  
+4. **Ratchet** — Double Ratchet (root, chains, bounded skip cache, explicit DH rotation rules).  
+5. **Payloads** — AEAD (v0 uses ChaCha20-Poly1305 family per spec); explicit nonces and AD binding.  
+6. **Replay** — counters, ordering window, reset semantics specified in protocol.  
+7. **Recovery** — reset vs continuation; multi-device deferred unless explicitly scoped.  
+8. **Attachments** — **[docs/v0-attachments.md](docs/v0-attachments.md)**.
 
 ## Binary framing (outline)
 
-Define a single canonical record layout, for example:
-
-1. Magic / protocol identifier (fixed bytes)  
-2. **Version** (e.g. `1` for v0 wire)  
-3. **Message type** (handshake, application data, control, …)  
-4. Fixed or length-prefixed identifiers (**max lengths** everywhere)  
-5. Inner payload: **only** `length || bytes` for variable fields  
-6. Declare integer endianness (e.g. **little-endian**) for all multi-byte values  
-
-Include **max sizes** per field for anti-DoS and **test vectors** per type.
+Canonical records: magic/version, message type, bounded fields, inner `length || bytes`, declared endianness — **normative detail and limits in [`docs/v0-protocol.md`](docs/v0-protocol.md)** and wire tests under `crates/libgary-wire/tests/`.
 
 ## Server role (trusted delivery only)
 
-The server handles:
-
-- Public key / prekey directory  
-- Relay of **opaque encrypted blobs**  
-- **APNs** (or equivalent) for wakeup  
-- Attachment relay (opaque ciphertext + metadata policy you define)  
-
-The server **must not** be able to decrypt message contents.
+Directory / relay of opaque blobs / wakeup push / attachment relay — **must not** decrypt application payloads.
 
 ## Tech stack (directional)
 
-**Client**
+**Reference crypto & session engine:** Rust workspace (this repo).
 
-- Swift  
-- SQLite / **SQLCipher** for local encrypted storage  
-- **libsodium** via a Swift wrapper  
+**Client (product direction):** Swift, SQLite / SQLCipher, libsodium via Swift wrapper — integrates via FFI against a deliberately small Rust surface (`libgary-ffi` direction).
 
-**Backend**
-
-- Rust **or** Go  
-- PostgreSQL  
-- Redis queue  
-- **QUIC** transport (TLS identity and traffic/metadata analysis are separate concerns—document padding/timing goals if you care.)  
+**Backend (product direction):** Rust or Go, PostgreSQL, Redis queue, QUIC — orthogonal to the E2E boundary described above.
 
 ## Future (explicitly not v1)
 
-- **Disappearing messages** (per-chat TTL, local secure deletion, optional server queue caps)—product + retention policy; optional wire hints later; see [docs/privacy-architecture.md](docs/privacy-architecture.md) §12.  
-- **Group chat** may later use **MLS (RFC 9420)** with a Rust core (e.g. OpenMLS) and Swift via FFI; separate from this 1:1 v0 track.  
-- **XMPP / Prosody** modules (SASL2, MUC push helpers, etc.) apply only if you ship an XMPP-based product; they are **not** implied by the custom QUIC + blob relay design above.
+- **Disappearing messages** — [`docs/privacy-architecture.md`](docs/privacy-architecture.md) §12.  
+- **Group chat / MLS** — separate track from 1:1 v0.  
+- **XMPP / Prosody** — only if you ship XMPP; not implied by the custom relay design.
 
 ## Next steps
 
-1. Review **[docs/v0-protocol.md](docs/v0-protocol.md)** (normative) and **[docs/test-vectors.md](docs/test-vectors.md)**.  
-2. Add **Double Ratchet step vectors** (v0.1) to `tools/gen_test_vectors.py` and validate Swift + Rust/Go against them.  
-3. Implement clients/server strictly against the spec.
+1. Keep **`docs/v0-protocol.md`** and **`docs/test-vectors.md`** authoritative; extend vectors where gaps remain.  
+2. Run **`cargo test --workspace --locked`** before every change; use **`--all-features`** before merge / in CI.  
+3. When wiring Swift or another host, treat [`docs/session-handle-boundary.md`](docs/session-handle-boundary.md) as the integration contract alongside the protocol docs.
