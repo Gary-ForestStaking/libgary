@@ -60,7 +60,8 @@ impl DocFixture {
     pub fn init_body() -> InitBody {
         InitBody {
             initiator_sig_pk: *Self::alice_signing_key().verifying_key().as_bytes(),
-            initiator_dh_pk: *PublicKey::from(&StaticSecret::from(Self::alice_ik_priv())).as_bytes(),
+            initiator_dh_pk: *PublicKey::from(&StaticSecret::from(Self::alice_ik_priv()))
+                .as_bytes(),
             ephemeral_ek_pub: *PublicKey::from(&StaticSecret::from(Self::ek_a_seed())).as_bytes(),
             otp_index_be: 0,
             reserved_be: 0,

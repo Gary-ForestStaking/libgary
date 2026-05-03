@@ -5,20 +5,60 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 description = "libgary v0 cryptographic core (X3DH transcript, HKDF, AEAD, ratchet)"
+autotests = false
+
+[features]
+## RESET/mode introspection, counters, and other helpers — **not** for production embedding.
+## Used by integration tests and protocol drills (`cargo test -p libgary-core --all-features`).
+protocol-test-api = []
 
 [dependencies]
 chacha20poly1305 = { version = "0.10", features = ["stream"] }
 ed25519-dalek = { version = "2", features = ["rand_core"] }
 hkdf = "0.12"
 hmac = "0.12"
+rand_core = "0.6"
 sha2 = "0.10"
 subtle = "2.5"
 thiserror = "1.0"
 x25519-dalek = { version = "2", features = ["static_secrets"] }
+zeroize = { version = "1.8", features = ["derive"] }
 
 libgary-wire = { path = "../libgary-wire" }
 
 [dev-dependencies]
 ed25519-dalek = "2"
 hex = "0.4"
+libgary-storage = { path = "../libgary-storage" }
+rand_chacha = "0.3"
+rand_core = "0.6"
+tempfile = "3"
 x25519-dalek = { version = "2", features = ["static_secrets"] }
+
+[[test]]
+name = "doc_vectors"
+path = "tests/doc_vectors.rs"
+
+[[test]]
+name = "recovery_equivalence"
+path = "tests/recovery_equivalence.rs"
+
+[[test]]
+name = "api_boundary"
+path = "tests/api_boundary.rs"
+required-features = ["protocol-test-api"]
+
+[[test]]
+name = "engine_session_tests"
+path = "tests/engine_session_tests.rs"
+required-features = ["protocol-test-api"]
+
+[[test]]
+name = "full_transcript"
+path = "tests/full_transcript.rs"
+required-features = ["protocol-test-api"]
+
+[[test]]
+name = "full_transcript_chaos"
+path = "tests/full_transcript_chaos.rs"
+required-features = ["protocol-test-api"]

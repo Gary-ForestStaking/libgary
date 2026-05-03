@@ -1,0 +1,54 @@
+[package]
+name = "libgary-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+libgary-core = { path = "../crates/libgary-core" }
+libgary-wire = { path = "../crates/libgary-wire" }
+rand_chacha = "0.3"
+rand_core = "0.6"
+x25519-dalek = { version = "2", features = ["static_secrets"] }
+
+[[bin]]
+name = "outer_record_decode"
+path = "fuzz_targets/outer_record_decode.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "relay_outer_decode"
+path = "fuzz_targets/relay_outer_decode.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "strip_outer_pad"
+path = "fuzz_targets/strip_outer_pad.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "header_parse"
+path = "fuzz_targets/header_parse.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "handle_inbound_outer"
+path = "fuzz_targets/handle_inbound_outer.rs"
+test = false
+doc = false
+bench = false
+
+# Isolate from repo workspace so `cargo fuzz run` / local `cargo build --manifest-path` work.
+[workspace]

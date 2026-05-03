@@ -1,6 +1,6 @@
 //! Inner handshake AEAD helpers ([v0-handshake](docs/v0-handshake.md), [v0-kdf](docs/v0-kdf.md)).
 
-use crate::aead::{xdecrypt, xencrypt, AeadError};
+use crate::aead::{AeadError, xdecrypt, xencrypt};
 use crate::constants::{
     AAD_ACK_PREFIX, AAD_INIT_PREFIX, INFO_ACK_AEAD_V1, INFO_ACK_INNER_V1, INFO_INIT_AEAD_V1,
     INFO_INIT_INNER_V1,
@@ -13,9 +13,7 @@ pub fn k_init(km: &[u8], th0: &[u8; 32]) -> [u8; 32] {
     let mut ikm = Vec::with_capacity(km.len() + 32);
     ikm.extend_from_slice(km);
     ikm.extend_from_slice(th0);
-    hkdf_zero32(&ikm, INFO_INIT_AEAD_V1, 32)
-        .try_into()
-        .unwrap()
+    hkdf_zero32(&ikm, INFO_INIT_AEAD_V1, 32).try_into().unwrap()
 }
 
 pub fn nonce_init(km: &[u8], th0: &[u8; 32], epoch_be: u32, session_id: &[u8; 16]) -> [u8; 24] {
@@ -59,9 +57,7 @@ pub fn encrypt_init_inner(
 }
 
 pub fn k_ack(okm: &[u8; 64]) -> [u8; 32] {
-    hkdf_zero32(okm, INFO_ACK_AEAD_V1, 32)
-        .try_into()
-        .unwrap()
+    hkdf_zero32(okm, INFO_ACK_AEAD_V1, 32).try_into().unwrap()
 }
 
 pub fn nonce_ack(okm: &[u8; 64], epoch_be: u32, session_id: &[u8; 16]) -> [u8; 24] {
@@ -72,7 +68,11 @@ pub fn nonce_ack(okm: &[u8; 64], epoch_be: u32, session_id: &[u8; 16]) -> [u8; 2
     nonce24(okm, &label)
 }
 
-pub fn aad_ack(epoch_be: u32, session_id: &[u8; 16], init_ack_wire: &[u8; InitAckWire::LEN]) -> Vec<u8> {
+pub fn aad_ack(
+    epoch_be: u32,
+    session_id: &[u8; 16],
+    init_ack_wire: &[u8; InitAckWire::LEN],
+) -> Vec<u8> {
     let mut aad = Vec::with_capacity(AAD_ACK_PREFIX.len() + 4 + 16 + InitAckWire::LEN);
     aad.extend_from_slice(AAD_ACK_PREFIX);
     aad.extend_from_slice(&epoch_be.to_be_bytes());
@@ -82,9 +82,7 @@ pub fn aad_ack(epoch_be: u32, session_id: &[u8; 16], init_ack_wire: &[u8; InitAc
 }
 
 pub fn plain_inner_ack(th1: &[u8; 32]) -> [u8; 256] {
-    hkdf_zero32(th1, INFO_ACK_INNER_V1, 256)
-        .try_into()
-        .unwrap()
+    hkdf_zero32(th1, INFO_ACK_INNER_V1, 256).try_into().unwrap()
 }
 
 pub fn encrypt_ack_inner(

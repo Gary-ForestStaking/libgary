@@ -1,9 +1,20 @@
 //! Fixed-layout wire structs for libgary v0 (`docs/v0-protocol.md` §6).
 #![forbid(unsafe_code)]
 
+mod constants;
 mod error;
+mod outer;
+mod pad;
+mod relay;
 
+pub use constants::{
+    HEADER_VERSION_V0, MAX_OUTER_RECORD_SERIALIZED, MAX_RECORD_BODY_LEN, MAX_ROUTE_TOKEN_LEN,
+    RELAY_VERSION_V0,
+};
 pub use error::WireError;
+pub use outer::OuterRecord;
+pub use pad::{PADDING_BUCKETS, pad_outer, smallest_padding_bucket, strip_outer_pad};
+pub use relay::RelayOuterEnvelope;
 
 /// Outer-record header: exactly **63** bytes (v0-protocol §6.3).
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -41,6 +52,33 @@ impl Header {
             session_id: bytes[7..23].try_into().unwrap(),
             counter_be: u64::from_be_bytes(bytes[23..31].try_into().unwrap()),
             ratchet_pub: bytes[31..63].try_into().unwrap(),
+        }
+    }
+
+    /// Decode the first 63 bytes and run [`Self::validate_v0`].
+    pub fn parse_checked(slice: &[u8]) -> Result<Self, WireError> {
+        if slice.len() < Self::LEN {
+            return Err(WireError::Truncated);
+        }
+        let arr: &[u8; Self::LEN] = slice[..Self::LEN].try_into().unwrap();
+        let h = Self::decode(arr);
+        h.validate_v0()?;
+        Ok(h)
+    }
+
+    /// Structural validation for v0 records (`docs/v0-protocol.md` §6.3 §7).
+    pub fn validate_v0(&self) -> Result<(), WireError> {
+        if self.version != HEADER_VERSION_V0 {
+            return Err(WireError::InvalidHeaderVersion);
+        }
+        if self.flags != 0 {
+            return Err(WireError::InvalidHeaderFlags);
+        }
+        match self.typ {
+            // INIT, INIT_ACK, DATA, REKEY, CLOSE, RESET_INIT, RESET_ACK
+            0x01 | 0x02 | 0x03 | 0x05 | 0x06 | 0x07 | 0x08 => Ok(()),
+            // RECEIPT deprecated / reserved opcodes
+            _ => Err(WireError::InvalidHeaderType),
         }
     }
 }

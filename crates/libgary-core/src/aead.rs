@@ -14,8 +14,7 @@ pub fn xencrypt(
     plaintext: &[u8],
     aad: &[u8],
 ) -> Result<Vec<u8>, AeadError> {
-    let cipher =
-        XChaCha20Poly1305::new(Key::from_slice(key));
+    let cipher = XChaCha20Poly1305::new(Key::from_slice(key));
     let n = XNonce::from_slice(nonce);
     cipher
         .encrypt(

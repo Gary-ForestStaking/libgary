@@ -28,9 +28,7 @@ pub fn okm_root_bootstrap(ikm_session: &[u8]) -> [u8; 64] {
 }
 
 pub fn confirm_key(okm: &[u8; 64]) -> [u8; 32] {
-    hkdf_zero32(okm, INFO_CONFIRM_V1, 32)
-        .try_into()
-        .unwrap()
+    hkdf_zero32(okm, INFO_CONFIRM_V1, 32).try_into().unwrap()
 }
 
 pub fn confirm_mac(confirm_key: &[u8; 32], th1: &[u8; 32]) -> [u8; 16] {
@@ -40,11 +38,7 @@ pub fn confirm_mac(confirm_key: &[u8; 32], th1: &[u8; 32]) -> [u8; 16] {
     full[..16].try_into().unwrap()
 }
 
-pub fn verify_confirm_mac(
-    confirm_key: &[u8; 32],
-    th1: &[u8; 32],
-    mac: &[u8; 16],
-) -> bool {
+pub fn verify_confirm_mac(confirm_key: &[u8; 32], th1: &[u8; 32], mac: &[u8; 16]) -> bool {
     let expected = confirm_mac(confirm_key, th1);
     mac.ct_eq(&expected).into()
 }

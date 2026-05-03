@@ -4,7 +4,12 @@ version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
-description = "libgary v0 wire types (Header, handshake bodies)"
+description = "libgary v0 wire framing (Header, OuterRecord, relay PAD)"
 
 [dependencies]
+rand_core = "0.6"
 thiserror = "1.0"
+
+[dev-dependencies]
+hex = "0.4"
+rand_chacha = "0.3"

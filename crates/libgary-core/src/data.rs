@@ -1,9 +1,9 @@
 //! DATA inner plaintext layout ([v0-protocol](docs/v0-protocol.md) §6.4).
 
+use crate::aead::{AeadError, xencrypt};
 use crate::constants::{DATA_INNER_FIXED, INFO_DATA_INNER_PAD_V1};
 use crate::kdf::hkdf_zero32;
 use crate::nonce::nonce24;
-use crate::aead::{xencrypt, AeadError};
 use libgary_wire::Header;
 
 #[derive(Debug, thiserror::Error)]

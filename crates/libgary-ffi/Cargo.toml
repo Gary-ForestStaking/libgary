@@ -1,0 +1,13 @@
+[package]
+name = "libgary-ffi"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Stable C ABI façade for libgary SessionHandle (minimal v0 stub)"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+libgary-core = { path = "../libgary-core" }

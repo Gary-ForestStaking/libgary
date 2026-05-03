@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "crates/libgary-core",
+    "crates/libgary-ffi",
     "crates/libgary-wire",
     "crates/libgary-storage",
     "crates/libgary-attach",

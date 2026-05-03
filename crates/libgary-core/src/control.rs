@@ -1,6 +1,6 @@
 //! Control-plane AEAD (`REKEY`, `CLOSE`, …) ([v0-handshake](docs/v0-handshake.md)).
 
-use crate::aead::{xencrypt, AeadError};
+use crate::aead::{AeadError, xdecrypt, xencrypt};
 use crate::constants::{INFO_CONTROL_AEAD_V1, INFO_CTRL_PAD_V1};
 use crate::kdf::hkdf_zero32;
 use crate::nonce::nonce24;
@@ -52,13 +52,19 @@ pub fn encrypt_ctrl_payload(
     inner_plaintext256: &[u8; 256],
 ) -> Result<Vec<u8>, AeadError> {
     let key = k_control(okm);
-    let nonce = nonce_ctrl(
-        okm,
-        hdr.typ,
-        hdr.epoch_be,
-        hdr.counter_be,
-        &hdr.session_id,
-    );
+    let nonce = nonce_ctrl(okm, hdr.typ, hdr.epoch_be, hdr.counter_be, &hdr.session_id);
     let aad = hdr.encode();
     xencrypt(&key, &nonce, inner_plaintext256, &aad)
+}
+
+pub fn decrypt_ctrl_payload(
+    okm: &[u8; 64],
+    hdr: &Header,
+    ciphertext: &[u8],
+) -> Result<[u8; 256], AeadError> {
+    let key = k_control(okm);
+    let nonce = nonce_ctrl(okm, hdr.typ, hdr.epoch_be, hdr.counter_be, &hdr.session_id);
+    let aad = hdr.encode();
+    let pt = xdecrypt(&key, &nonce, ciphertext, &aad)?;
+    pt.try_into().map_err(|_| AeadError::Cipher)
 }
